@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kayıt Ol ve Giriş Yap</title>
+    <style>
+      body {
+        font-family: "Poppins", Arial, sans-serif;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: #fff;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 400px;
+      }
+
+      .tabs {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .tabs button {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        border-radius: 8px;
+        transition: background 0.3s ease;
+      }
+
+      .tabs button.active {
+        background: #007bff;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+      }
+
+      form.hidden {
+        display: none;
+      }
+
+      form input {
+        margin: 0;
+        padding: 12px;
+        font-size: 14px;
+        border: none;
+        border-radius: 8px;
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+
+      form input::placeholder {
+        color: #fff;
+        opacity: 0.8;
+      }
+
+      form button {
+        padding: 12px;
+        font-size: 16px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      form button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="tabs">
+        <button id="registerTab" class="active" onclick="showForm('register')">
+          Kayıt Ol
+        </button>
+        <button id="loginTab" onclick="showForm('login')">Giriş Yap</button>
+      </div>
+
+      <form id="registerForm" onsubmit="handleRegister(event)">
+        <input type="text" id="isim" placeholder="İsim" required />
+        <input type="text" id="userName" placeholder="Kullanıcı Adı" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="sifre" placeholder="Şifre" required />
+        <button type="submit">Kayıt Ol</button>
+      </form>
+
+      <form id="loginForm" class="hidden" onsubmit="handleLogin(event)">
+        <input type="email" id="loginEmail" placeholder="Email" required />
+        <input type="password" id="loginSifre" placeholder="Şifre" required />
+        <button type="submit">Giriş Yap</button>
+      </form>
+    </div>
+
+    <script>
+      function showForm(type) {
+        const registerForm = document.getElementById("registerForm");
+        const loginForm = document.getElementById("loginForm");
+        const registerTab = document.getElementById("registerTab");
+        const loginTab = document.getElementById("loginTab");
+
+        if (type === "register") {
+          registerForm.classList.remove("hidden");
+          loginForm.classList.add("hidden");
+          registerTab.classList.add("active");
+          loginTab.classList.remove("active");
+        } else {
+          registerForm.classList.add("hidden");
+          loginForm.classList.remove("hidden");
+          registerTab.classList.remove("active");
+          loginTab.classList.add("active");
+        }
+      }
+
+      async function handleRegister(event) {
+        event.preventDefault();
+        const isim = document.getElementById("isim").value;
+        const userName = document.getElementById("userName").value;
+        const email = document.getElementById("email").value;
+        const sifre = document.getElementById("sifre").value;
+
+        try {
+          const response = await fetch("http://localhost:3000/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isim, userName, email, sifre }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            localStorage.setItem("userName", data.user.userName);
+            localStorage.setItem("token", data.token);
+            window.location.href = "mainPage.html";
+          } else {
+            alert("Hata: " + data.mesaj);
+          }
+        } catch (error) {
+          alert("Bir hata oluştu: " + error.message);
+        }
+      }
+
+      async function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById("loginEmail").value;
+        const sifre = document.getElementById("loginSifre").value;
+
+        try {
+          const response = await fetch("http://localhost:3000/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, sifre }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            localStorage.setItem("userName", data.user.userName);
+            localStorage.setItem("token", data.token);
+
+
+            if (data.user.role.includes("admin")) {
+              window.location.href = "adminPage.html";
+            } else {
+              window.location.href = "mainPage.html";
+            }
+          } else {
+            alert("Hata: " + data.mesaj);
+          }
+        } catch (error) {
+          alert("Bir hata oluştu: " + error.message);
+        }
+      }
+    </script>
+  </body>
+</html>

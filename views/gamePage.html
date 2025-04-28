@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oyun</title>
+
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Poppins", Arial, sans-serif;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: #fff;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+      }
+
+      .container h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #fff;
+      }
+
+      .container input {
+        width: 100%;
+        margin-top: 20px;
+        padding: 12px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+
+      .container button {
+        margin-top: 15px;
+        padding: 12px 20px;
+        font-size: 16px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .container button:hover {
+        background: #0056b3;
+      }
+
+      .container p {
+        margin-top: 15px;
+        font-size: 18px;
+      }
+
+      .container #result {
+        font-weight: bold;
+        font-size: 24px;
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .container #result.correct {
+        color: #28a745;
+      }
+
+      .container #result.incorrect {
+        color: #dc3545;
+      }
+
+      .container #score {
+        margin-top: 10px;
+        font-size: 18px;
+        color: #ffeb3b;
+      }
+
+      .container input::placeholder {
+        color: #fff;
+        opacity: 0.8;
+      }
+
+      #logout-button {
+        margin-top: 20px;
+        padding: 12px 20px;
+        font-size: 16px;
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: 100%;
+      }
+
+      #logout-button:hover {
+        background: #a71d2a;
+      }
+
+      #check-button:hover {
+        background: #2ad100ce;
+      }
+      #skip-button:hover {
+        background: #d1d100ce;
+      }
+
+    </style>   
+  </head>
+  <body>
+    <div class="container">
+      <h1 id="word">Kelime Yükleniyor...</h1>
+      <input type="text" id="answer" placeholder="Türkçe karşılığını yazın" />
+      <button onclick="checkAnswer()" id="check-button">
+        <i class="fas fa-check"></i> Cevabı Kontrol Et
+      </button>
+      <button onclick="skipWord()" id="skip-button"><i class="fas fa-forward"></i> Geç</button>
+
+      <p id="result"></p>
+      <p id="score">Puan: 0</p>
+      <button onclick="logout()" id="logout-button">Çıkış Yap</button>
+    </div>
+
+    <script>
+      let currentWordId = null;
+      let score = 0;
+
+
+      async function getRandomWord() {
+        try {
+          const response = await fetch("http://localhost:3000/random-word", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(
+              `Hata: ${response.status} - ${response.statusText}`
+            );
+          }
+
+          const data = await response.json();
+
+
+          if (data && data.english_word) {
+            currentWordId = data.id;
+            document.getElementById("word").textContent = data.english_word;
+          } else {
+            throw new Error("Geçerli bir kelime bulunamadı");
+          }
+        } catch (error) {
+          console.error("Kelime getirilemedi:", error);
+          document.getElementById("word").textContent = "Bir hata oluştu!";
+        }
+      }
+      async function skipWord() {
+        try {
+
+          await getRandomWord();
+
+
+          document.getElementById("result").textContent = "";
+          document.getElementById("answer").value = "";
+        } catch (error) {
+          console.error("Kelime geçilemedi:", error);
+        }
+      }
+
+      async function checkAnswer() {
+        const answer = document
+          .getElementById("answer")
+          .value.trim()
+          .toLowerCase();
+
+        try {
+          const response = await fetch("http://localhost:3000/check-answer", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ wordId: currentWordId, answer }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Cevap kontrol edilemedi");
+          }
+
+          const data = await response.json();
+
+          const resultElement = document.getElementById("result");
+
+          if (data.dogru) {
+            resultElement.innerHTML = `<i class="fas fa-check-circle"></i> Doğru!`;
+            resultElement.className = "correct";
+            score = data.yeniPuan;
+            document.getElementById("score").textContent = `Puan: ${score}`;
+            getRandomWord();
+          } else {
+            resultElement.innerHTML = `<i class="fas fa-times-circle"></i> Yanlış!`;
+            resultElement.className = "incorrect";
+          }
+
+          // Input alanını temizle
+          document.getElementById("answer").value = "";
+        } catch (error) {
+          console.error("Cevap kontrol edilemedi:", error);
+        }
+      }
+
+      async function logout() {
+        try {
+          const response = await fetch("http://localhost:3000/logout", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (response.ok) {
+
+            localStorage.removeItem("userName");
+            localStorage.removeItem("token");
+
+
+            window.location.href = "register-login.html";
+          } else {
+            alert("Çıkış yapılamadı. Lütfen tekrar deneyin.");
+          }
+        } catch (error) {
+          console.error("Çıkış sırasında bir hata oluştu:", error);
+          alert("Bir hata oluştu. Lütfen tekrar deneyin.");
+        }
+      }
+
+
+      getRandomWord();
+    </script>
+  </body>
+</html>

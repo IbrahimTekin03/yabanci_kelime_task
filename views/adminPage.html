@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Paneli</title>
+    <style>
+      body {
+        font-family: "Poppins", Arial, sans-serif;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: #fff;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 400px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      form input {
+        padding: 12px;
+        font-size: 14px;
+        border: none;
+        border-radius: 8px;
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+
+      form button {
+        padding: 12px;
+        font-size: 16px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      form button:hover {
+        background: #0056b3;
+      }
+
+      .container input::placeholder {
+        color: #fff;
+        opacity: 0.8;
+      }
+
+      .logout-button {
+        margin-top: 20px;
+        padding: 12px 20px;
+        font-size: 16px;
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: 100%;
+      }
+
+      .logout-button:hover {
+        background: #a71d2a;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Kelime Ekle</h1>
+      <form id="addWordForm" onsubmit="addWord(event)">
+        <input
+          type="text"
+          id="englishWord"
+          placeholder="İngilizce Kelime"
+          required
+        />
+        <input
+          type="text"
+          id="turkishWord"
+          placeholder="Türkçe Karşılık"
+          required
+        />
+        <input type="number" id="puan" placeholder="Puan" required />
+        <input type="number" id="zorluk" placeholder="Zorluk (1-3)" required />
+        <button type="submit">Ekle</button>
+        <button onclick="logout()" class="logout-button">Çıkış Yap</button>
+      </form>
+    </div>
+
+    <script>
+      async function addWord(event) {
+        event.preventDefault();
+        const englishWord = document.getElementById("englishWord").value;
+        const turkishWord = document.getElementById("turkishWord").value;
+        const puan = document.getElementById("puan").value;
+        const zorluk = document.getElementById("zorluk").value;
+
+        try {
+          const response = await fetch("http://localhost:3000/add-word", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ englishWord, turkishWord, puan, zorluk }),
+          });
+
+          if (response.ok) {
+            alert("Kelime başarıyla eklendi!");
+            document.getElementById("addWordForm").reset();
+          } else {
+            const data = await response.json();
+            alert("Hata: " + data.mesaj);
+          }
+        } catch (error) {
+          alert("Bir hata oluştu: " + error.message);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const response = await fetch("http://localhost:3000/verify-admin", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Yetkisiz erişim");
+          }
+        } catch (error) {
+          alert("Bu sayfaya erişim yetkiniz yok!");
+          window.location.href = "mainPage.html";
+        }
+      });
+
+      async function logout() {
+        try {
+          const response = await fetch("http://localhost:3000/logout", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (response.ok) {
+
+            localStorage.removeItem("userName");
+            localStorage.removeItem("token");
+
+
+            window.location.href = "register-login.html";
+          } else {
+            alert("Çıkış yapılamadı. Lütfen tekrar deneyin.");
+          }
+        } catch (error) {
+          console.error("Çıkış sırasında bir hata oluştu:", error);
+          alert("Bir hata oluştu. Lütfen tekrar deneyin.");
+        }
+      }
+    </script>
+  </body>
+</html>

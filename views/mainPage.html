@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hoşgeldin</title>
+    <style>
+      body {
+        font-family: "Poppins", Arial, sans-serif;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: #fff;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+      }
+
+      .container h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #fff;
+      }
+
+      .container p {
+        font-size: 18px;
+        color: #ddd;
+      }
+
+      .logout-button,
+      .start-game-button {
+        margin-top: 20px;
+        padding: 12px 20px;
+        font-size: 16px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: 100%;
+      }
+
+      .logout-button:hover,
+      .start-game-button:hover {
+        background: #0056b3;
+      }
+
+      #score {
+        margin-top: 15px;
+        font-size: 20px;
+        color: #ffeb3b;
+      }
+
+      .logout-button {
+        margin-top: 20px;
+        padding: 12px 20px;
+        font-size: 16px;
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: 100%;
+      }
+
+      .logout-button:hover {
+        background: #a71d2a;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 id="welcomeMessage">Hoşgeldin!</h1>
+      <p>Bu, giriş yaptıktan sonra gördüğünüz ana sayfadır.</p>
+      <button class="start-game-button" onclick="startGame()">
+        Oyuna Başla
+      </button>
+      <p id="score">Puan: 0</p>
+      <button class="logout-button" onclick="logout()">Çıkış Yap</button>
+    </div>
+
+    <script>
+      const userName = localStorage.getItem("userName");
+
+      if (userName) {
+        document.getElementById(
+          "welcomeMessage"
+        ).textContent = `Hoşgeldin, ${userName}!`;
+      } else {
+        window.location.href = "register-login.html";
+      }
+
+      let score = 0;
+
+      function startGame() {
+        window.location.href = "gamePage.html";
+      }
+
+      function updateScore(newScore) {
+        score = newScore;
+        document.getElementById("score").textContent = `Puan: ${score}`;
+      }
+
+      function logout() {
+        localStorage.removeItem("userName");
+        localStorage.removeItem("token");
+        window.location.href = "register-login.html";
+      }
+
+      async function logout() {
+        try {
+          const response = await fetch("http://localhost:3000/logout", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (response.ok) {
+
+            localStorage.removeItem("userName");
+            localStorage.removeItem("token");
+
+
+            window.location.href = "register-login.html";
+          } else {
+            alert("Çıkış yapılamadı. Lütfen tekrar deneyin.");
+          }
+        } catch (error) {
+          console.error("Çıkış sırasında bir hata oluştu:", error);
+          alert("Bir hata oluştu. Lütfen tekrar deneyin.");
+        }
+      }
+    </script>
+  </body>
+</html>
